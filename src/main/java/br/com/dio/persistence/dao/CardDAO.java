@@ -2,6 +2,7 @@ package br.com.dio.persistence.dao;
 
 import br.com.dio.dto.CardDetailsDTO;
 import br.com.dio.persistence.entity.CardEntity;
+import br.com.dio.persistence.entity.CardPriority;
 import com.mysql.cj.jdbc.StatementImpl;
 import lombok.AllArgsConstructor;
 
@@ -18,12 +19,13 @@ public class CardDAO {
     private Connection connection;
 
     public CardEntity insert(final CardEntity entity) throws SQLException {
-        var sql = "INSERT INTO CARDS (title, description, board_column_id) values (?, ?, ?);";
+        var sql = "INSERT INTO CARDS (title, description, board_column_id, card_priority) values (?, ?, ?, ?);";
         try(var statement = connection.prepareStatement(sql)){
             var i = 1;
             statement.setString(i ++, entity.getTitle());
             statement.setString(i ++, entity.getDescription());
-            statement.setLong(i, entity.getBoardColumn().getId());
+            statement.setLong(i ++, entity.getBoardColumn().getId());
+            statement.setString(i, entity.getPriority().name());
             statement.executeUpdate();
             if (statement instanceof StatementImpl impl){
                 entity.setId(impl.getLastInsertID());
@@ -50,6 +52,7 @@ public class CardDAO {
                        c.description,
                        b.blocked_at,
                        b.block_reason,
+                       c.card_priority,
                        c.board_column_id,
                        bc.name,
                        (SELECT COUNT(sub_b.id)
@@ -77,7 +80,8 @@ public class CardDAO {
                         resultSet.getString("b.block_reason"),
                         resultSet.getInt("blocks_amount"),
                         resultSet.getLong("c.board_column_id"),
-                        resultSet.getString("bc.name")
+                        resultSet.getString("bc.name"),
+                        CardPriority.valueOf(resultSet.getString("c.card_priority"))
                 );
                 return Optional.of(dto);
             }

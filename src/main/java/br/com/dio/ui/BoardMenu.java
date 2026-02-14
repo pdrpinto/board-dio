@@ -4,6 +4,7 @@ import br.com.dio.dto.BoardColumnInfoDTO;
 import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardEntity;
 import br.com.dio.persistence.entity.CardEntity;
+import br.com.dio.persistence.entity.CardPriority;
 import br.com.dio.service.BoardColumnQueryService;
 import br.com.dio.service.BoardQueryService;
 import br.com.dio.service.CardQueryService;
@@ -64,6 +65,8 @@ public class BoardMenu {
         card.setTitle(scanner.next());
         System.out.println("Informe a descrição do card");
         card.setDescription(scanner.next());
+        System.out.println("Informe a prioridade do card (BLOCKER, HIGH, MEDIUM, LOW)");
+        card.setPriority(CardPriority.valueOf(scanner.next().toUpperCase()));
         card.setBoardColumn(entity.getInitialColumn());
         try(var connection = getConnection()){
             new CardService(connection).create(card);
@@ -148,8 +151,8 @@ public class BoardMenu {
             var column = new BoardColumnQueryService(connection).findById(selectedColumnId);
             column.ifPresent(co -> {
                 System.out.printf("Coluna %s tipo %s\n", co.getName(), co.getKind());
-                co.getCards().forEach(ca -> System.out.printf("Card %s - %s\nDescrição: %s",
-                        ca.getId(), ca.getTitle(), ca.getDescription()));
+                co.getCards().forEach(ca -> System.out.printf("Card %s - %s [%s]\nDescrição: %s",
+                        ca.getId(), ca.getTitle(), ca.getPriority(), ca.getDescription()));
             });
         }
     }
@@ -161,7 +164,7 @@ public class BoardMenu {
             new CardQueryService(connection).findById(selectedCardId)
                     .ifPresentOrElse(
                             c -> {
-                                System.out.printf("Card %s - %s.\n", c.id(), c.title());
+                                System.out.printf("Card %s - %s [%s].\n", c.id(), c.title(), c.priority());
                                 System.out.printf("Descrição: %s\n", c.description());
                                 System.out.println(c.blocked() ?
                                         "Está bloqueado. Motivo: " + c.blockReason() :
